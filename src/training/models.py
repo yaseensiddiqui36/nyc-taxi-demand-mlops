@@ -40,12 +40,14 @@ def build_lgbm_pipeline(params: dict | None = None) -> Pipeline:
     }
     if params:
         lgbm_params.update(params)
-    return Pipeline([
-        ("temporal",  TemporalFeatureEngineer()),
-        ("rolling",   RollingStatsEngineer()),
-        ("drop_ids",  _id_dropper),
-        ("model",     LGBMRegressor(**lgbm_params)),
-    ])
+    return Pipeline(
+        [
+            ("temporal", TemporalFeatureEngineer()),
+            ("rolling", RollingStatsEngineer()),
+            ("drop_ids", _id_dropper),
+            ("model", LGBMRegressor(**lgbm_params)),
+        ]
+    )
 
 
 def build_xgb_pipeline(params: dict | None = None) -> Pipeline:
@@ -62,16 +64,18 @@ def build_xgb_pipeline(params: dict | None = None) -> Pipeline:
         "random_state": 42,
         "n_jobs": -1,
         "verbosity": 0,
-        "tree_method": "hist",    # fast on CPU
+        "tree_method": "hist",  # fast on CPU
     }
     if params:
         xgb_params.update(params)
-    return Pipeline([
-        ("temporal",  TemporalFeatureEngineer()),
-        ("rolling",   RollingStatsEngineer()),
-        ("drop_ids",  _id_dropper),
-        ("model",     XGBRegressor(**xgb_params)),
-    ])
+    return Pipeline(
+        [
+            ("temporal", TemporalFeatureEngineer()),
+            ("rolling", RollingStatsEngineer()),
+            ("drop_ids", _id_dropper),
+            ("model", XGBRegressor(**xgb_params)),
+        ]
+    )
 
 
 def build_baseline_pipeline() -> Pipeline:
@@ -87,20 +91,24 @@ def build_baseline_pipeline() -> Pipeline:
             return self
 
         def predict(self, X):
-            week_cols = [f"lag_{w * 168}" for w in range(1, 5) if f"lag_{w * 168}" in X.columns]
+            week_cols = [
+                f"lag_{w * 168}" for w in range(1, 5) if f"lag_{w * 168}" in X.columns
+            ]
             if not week_cols:
                 return np.zeros(len(X))
             return X[week_cols].mean(axis=1).clip(lower=0).values
 
-    return Pipeline([
-        ("drop_ids", _id_dropper),
-        ("model",    SeasonalMeanRegressor()),
-    ])
+    return Pipeline(
+        [
+            ("drop_ids", _id_dropper),
+            ("model", SeasonalMeanRegressor()),
+        ]
+    )
 
 
 # Registry of all models available for experiments
 MODEL_REGISTRY = {
-    "lgbm":     build_lgbm_pipeline,
-    "xgboost":  build_xgb_pipeline,
+    "lgbm": build_lgbm_pipeline,
+    "xgboost": build_xgb_pipeline,
     "baseline": build_baseline_pipeline,
 }

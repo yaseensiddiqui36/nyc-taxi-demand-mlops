@@ -57,7 +57,9 @@ def alert_data_drift(drift_score: float, threshold: float = 0.25) -> None:
         logger.warning(f"Data drift alert sent: score={drift_score:.3f}")
 
 
-def alert_model_degradation(current_mae: float, reference_mae: float, threshold_pct: float = 0.15) -> None:
+def alert_model_degradation(
+    current_mae: float, reference_mae: float, threshold_pct: float = 0.15
+) -> None:
     degradation = (current_mae - reference_mae) / reference_mae if reference_mae else 0
     if degradation >= threshold_pct:
         msg = (
@@ -70,7 +72,9 @@ def alert_model_degradation(current_mae: float, reference_mae: float, threshold_
         logger.warning(f"Model degradation alert sent: {degradation:.1%} degradation")
 
 
-def alert_validation_failure(year: int, month: int, drop_rate: float, details: dict) -> None:
+def alert_validation_failure(
+    year: int, month: int, drop_rate: float, details: dict
+) -> None:
     msg = (
         f":x: *Data Validation Failed* for {year}-{month:02d}\n"
         f"Drop rate: `{drop_rate:.1%}`\nDetails: `{details}`"

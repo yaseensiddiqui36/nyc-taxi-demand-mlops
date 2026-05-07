@@ -47,7 +47,9 @@ def run_data_drift_report(
         column_mapping=column_mapping,
     )
 
-    report_path = REPORTS_DIR / f"{report_name}_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}.html"
+    report_path = (
+        REPORTS_DIR / f"{report_name}_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}.html"
+    )
     report.save_html(str(report_path))
 
     result = report.as_dict()
@@ -62,7 +64,11 @@ def run_data_drift_report(
     record_monitoring_metric("data_drift_score", drift_score)
     record_monitoring_metric("data_drift_detected", float(drift_detected))
 
-    return {"drift_detected": drift_detected, "drift_score": drift_score, "report_path": str(report_path)}
+    return {
+        "drift_detected": drift_detected,
+        "drift_score": drift_score,
+        "report_path": str(report_path),
+    }
 
 
 def run_model_performance_report(
@@ -89,7 +95,9 @@ def run_model_performance_report(
         column_mapping=column_mapping,
     )
 
-    report_path = REPORTS_DIR / f"{report_name}_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}.html"
+    report_path = (
+        REPORTS_DIR / f"{report_name}_{datetime.now(tz=timezone.utc):%Y%m%d_%H%M}.html"
+    )
     report.save_html(str(report_path))
 
     result = report.as_dict()
@@ -112,7 +120,9 @@ def run_model_performance_report(
     }
 
 
-def record_monitoring_metric(metric_name: str, value: float, metadata: dict | None = None) -> None:
+def record_monitoring_metric(
+    metric_name: str, value: float, metadata: dict | None = None
+) -> None:
     """Persist a monitoring metric to the model_monitoring table."""
     try:
         with get_session() as session:

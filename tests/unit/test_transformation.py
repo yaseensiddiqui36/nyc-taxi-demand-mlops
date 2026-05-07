@@ -1,17 +1,19 @@
 """Unit tests for time-series transformation logic."""
 
 import pandas as pd
-import pytest
 from src.data.transformation import to_hourly_time_series, to_features_and_target
 
 
 def _make_clean_df(n_trips: int = 50):
     import numpy as np
+
     rng = pd.date_range("2024-03-01 00:00:00", periods=n_trips, freq="30min", tz="UTC")
-    return pd.DataFrame({
-        "tpep_pickup_datetime": rng,
-        "PULocationID": np.random.choice([132, 161, 1], size=n_trips),
-    })
+    return pd.DataFrame(
+        {
+            "tpep_pickup_datetime": rng,
+            "PULocationID": np.random.choice([132, 161, 1], size=n_trips),
+        }
+    )
 
 
 def test_to_hourly_produces_complete_grid():

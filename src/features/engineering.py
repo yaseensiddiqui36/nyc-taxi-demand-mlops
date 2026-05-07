@@ -15,6 +15,7 @@ import pandas as pd
 
 try:
     import holidays as holidays_lib  # pip install holidays
+
     _HOLIDAYS_AVAILABLE = True
 except ImportError:
     _HOLIDAYS_AVAILABLE = False
@@ -42,7 +43,7 @@ class TemporalFeatureEngineer(BaseEstimator, TransformerMixin):
         X = X.copy()
         dt = pd.to_datetime(X["pickup_hour"], utc=True)
         X["hour_of_day"] = dt.dt.hour
-        X["day_of_week"] = dt.dt.dayofweek          # 0=Monday
+        X["day_of_week"] = dt.dt.dayofweek  # 0=Monday
         X["month"] = dt.dt.month
         X["is_weekend"] = (dt.dt.dayofweek >= 5).astype(int)
         X["is_holiday"] = dt.apply(_is_us_holiday)
@@ -72,7 +73,9 @@ class RollingStatsEngineer(BaseEstimator, TransformerMixin):
                 X[f"avg_rides_{weeks}w_ago"] = X[col]
 
         # Simple 4-week average
-        week_cols = [f"lag_{w * 168}" for w in range(1, 5) if f"lag_{w * 168}" in X.columns]
+        week_cols = [
+            f"lag_{w * 168}" for w in range(1, 5) if f"lag_{w * 168}" in X.columns
+        ]
         if week_cols:
             X["avg_rides_last_4w"] = X[week_cols].mean(axis=1)
 

@@ -47,26 +47,31 @@ with DAG(
 
     def _check_enough_data(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         from src.utils.db import get_session
         from sqlalchemy import text
 
         with get_session() as session:
             row_count = session.execute(
-                text("SELECT COUNT(*) FROM hourly_rides WHERE pickup_hour >= NOW() - INTERVAL '180 days'")
+                text(
+                    "SELECT COUNT(*) FROM hourly_rides WHERE pickup_hour >= NOW() - INTERVAL '180 days'"
+                )
             ).scalar()
 
         if row_count < 10_000:
-            raise ValueError(f"Insufficient training data: {row_count:,} rows (need ≥10,000)")
+            raise ValueError(
+                f"Insufficient training data: {row_count:,} rows (need ≥10,000)"
+            )
         print(f"Training data available: {row_count:,} rows")
 
     def _build_training_dataset(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         import pandas as pd
         from src.utils.db import get_session
         from src.data.transformation import to_features_and_target
-        from sqlalchemy import text
         from src.config import settings
 
         with get_session() as session:
@@ -87,6 +92,7 @@ with DAG(
 
     def _train_model(model_name: str, **ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         import pandas as pd
         from src.training.train import train_and_evaluate
@@ -108,7 +114,9 @@ with DAG(
 
         best_name = min(candidates, key=candidates.get)
         best_mae = candidates[best_name]
-        best_run_id = ti.xcom_pull(key=f"{best_name}_run_id", task_ids=f"train_{best_name}")
+        best_run_id = ti.xcom_pull(
+            key=f"{best_name}_run_id", task_ids=f"train_{best_name}"
+        )
         ti.xcom_push(key="best_model_name", value=best_name)
         ti.xcom_push(key="best_mae", value=best_mae)
         ti.xcom_push(key="best_run_id", value=best_run_id)
@@ -116,6 +124,7 @@ with DAG(
 
     def _register_if_better(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         from src.training.registry import register_model_if_better
 
@@ -127,8 +136,12 @@ with DAG(
 
     def _notify_result(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
-        from src.monitoring.alerts import alert_pipeline_success, alert_new_model_registered
+        from src.monitoring.alerts import (
+            alert_pipeline_success,
+            alert_new_model_registered,
+        )
 
         ti = ctx["ti"]
         promoted = ti.xcom_pull(key="promoted", task_ids="register_if_better")
@@ -140,28 +153,46 @@ with DAG(
         else:
             alert_pipeline_success(
                 "training_pipeline_dag",
-                f"Training complete. Best={best_name} MAE={best_mae:.2f}. No improvement over Production."
+                f"Training complete. Best={best_name} MAE={best_mae:.2f}. No improvement over Production.",
             )
 
     # ── Task graph ────────────────────────────────────────────
 
-    check_data   = PythonOperator(task_id="check_enough_data", python_callable=_check_enough_data)
-    build_data   = PythonOperator(task_id="build_training_dataset", python_callable=_build_training_dataset)
+    check_data = PythonOperator(
+        task_id="check_enough_data", python_callable=_check_enough_data
+    )
+    build_data = PythonOperator(
+        task_id="build_training_dataset", python_callable=_build_training_dataset
+    )
 
-    train_base   = PythonOperator(
-        task_id="train_baseline", python_callable=_train_model,
-        op_kwargs={"model_name": "baseline"}
+    train_base = PythonOperator(
+        task_id="train_baseline",
+        python_callable=_train_model,
+        op_kwargs={"model_name": "baseline"},
     )
-    train_lgbm   = PythonOperator(
-        task_id="train_lgbm", python_callable=_train_model,
-        op_kwargs={"model_name": "lgbm"}
+    train_lgbm = PythonOperator(
+        task_id="train_lgbm",
+        python_callable=_train_model,
+        op_kwargs={"model_name": "lgbm"},
     )
-    train_xgb    = PythonOperator(
-        task_id="train_xgboost", python_callable=_train_model,
-        op_kwargs={"model_name": "xgboost"}
+    train_xgb = PythonOperator(
+        task_id="train_xgboost",
+        python_callable=_train_model,
+        op_kwargs={"model_name": "xgboost"},
     )
-    select_best  = PythonOperator(task_id="select_best_model", python_callable=_select_best_model)
-    register     = PythonOperator(task_id="register_if_better", python_callable=_register_if_better)
-    notify       = PythonOperator(task_id="notify_result", python_callable=_notify_result)
+    select_best = PythonOperator(
+        task_id="select_best_model", python_callable=_select_best_model
+    )
+    register = PythonOperator(
+        task_id="register_if_better", python_callable=_register_if_better
+    )
+    notify = PythonOperator(task_id="notify_result", python_callable=_notify_result)
 
-    check_data >> build_data >> [train_base, train_lgbm, train_xgb] >> select_best >> register >> notify
+    (
+        check_data
+        >> build_data
+        >> [train_base, train_lgbm, train_xgb]
+        >> select_best
+        >> register
+        >> notify
+    )

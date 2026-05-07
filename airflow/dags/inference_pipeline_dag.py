@@ -44,6 +44,7 @@ with DAG(
 
     def _build_inference_features(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         import pandas as pd
         from src.utils.db import get_session
@@ -80,6 +81,7 @@ with DAG(
 
     def _generate_predictions(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         import pandas as pd
         import numpy as np
@@ -90,30 +92,35 @@ with DAG(
         feature_cols = [c for c in X.columns if c not in ("pickup_hour",)]
         preds = model.predict(X[feature_cols]).clip(0)
 
-        results = pd.DataFrame({
-            "pickup_location_id": X["pickup_location_id"].values,
-            "predicted_rides": np.round(preds, 2),
-        })
+        results = pd.DataFrame(
+            {
+                "pickup_location_id": X["pickup_location_id"].values,
+                "predicted_rides": np.round(preds, 2),
+            }
+        )
         results.to_parquet("/tmp/predictions.parquet", index=False)
         print(f"Generated {len(results)} predictions")
 
     def _store_predictions(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         import pandas as pd
         from src.utils.db import get_raw_connection
-        from src.training.registry import get_client
         from src.config import settings
         from datetime import datetime, timezone
-        from io import StringIO
 
         ti = ctx["ti"]
         preds = pd.read_parquet("/tmp/predictions.parquet")
-        predicted_hour_str = ti.xcom_pull(key="predicted_hour", task_ids="build_inference_features")
+        predicted_hour_str = ti.xcom_pull(
+            key="predicted_hour", task_ids="build_inference_features"
+        )
         if predicted_hour_str:
             predicted_hour = datetime.fromisoformat(predicted_hour_str)
         else:
-            predicted_hour = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
+            predicted_hour = datetime.now(tz=timezone.utc).replace(
+                minute=0, second=0, microsecond=0
+            )
         preds["predicted_hour"] = predicted_hour
         preds["model_name"] = settings.model_name
 
@@ -129,8 +136,12 @@ with DAG(
                         ON CONFLICT (pickup_location_id, predicted_hour) 
                         DO UPDATE SET predicted_rides = EXCLUDED.predicted_rides
                         """,
-                        (row["pickup_location_id"], row["predicted_hour"],
-                         row["predicted_rides"], row["model_name"]),
+                        (
+                            row["pickup_location_id"],
+                            row["predicted_hour"],
+                            row["predicted_rides"],
+                            row["model_name"],
+                        ),
                     )
             conn.commit()
             print(f"Stored {len(preds)} predictions for {predicted_hour.isoformat()}")
@@ -143,6 +154,7 @@ with DAG(
         Returns 'notify_on_drift' if degradation detected, else 'no_drift'.
         """
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         from src.utils.db import get_session
         from sqlalchemy import text
@@ -164,19 +176,24 @@ with DAG(
             return "no_drift"
 
         import numpy as np
+
         preds_arr = np.array([r[0] for r in rows])
         actuals_arr = np.array([r[1] for r in rows])
         recent_mae = float(np.mean(np.abs(preds_arr - actuals_arr)))
 
         # Log to monitoring table
         from src.monitoring.drift import record_monitoring_metric
+
         record_monitoring_metric("model_mae", recent_mae)
 
         # Pull reference MAE from MLflow
         from src.training.registry import get_production_mae
+
         prod_mae = get_production_mae()
         if prod_mae and recent_mae > prod_mae * 1.20:
-            print(f"Drift detected: recent_mae={recent_mae:.2f}, prod_mae={prod_mae:.2f}")
+            print(
+                f"Drift detected: recent_mae={recent_mae:.2f}, prod_mae={prod_mae:.2f}"
+            )
             ctx["ti"].xcom_push(key="recent_mae", value=recent_mae)
             ctx["ti"].xcom_push(key="reference_mae", value=prod_mae)
             return "notify_on_drift"
@@ -186,6 +203,7 @@ with DAG(
 
     def _notify_on_drift(**ctx) -> None:
         import sys
+
         sys.path.insert(0, "/opt/airflow")
         from src.monitoring.alerts import alert_model_degradation
 
@@ -213,4 +231,10 @@ with DAG(
         task_id="notify_on_drift", python_callable=_notify_on_drift
     )
 
-    build_features >> gen_preds >> store_preds >> drift_check >> [no_drift, notify_drift]
+    (
+        build_features
+        >> gen_preds
+        >> store_preds
+        >> drift_check
+        >> [no_drift, notify_drift]
+    )

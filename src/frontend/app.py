@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import requests
 import streamlit as st
 
@@ -26,6 +25,7 @@ st.set_page_config(
 
 
 # ── Helpers ──────────────────────────────────────────────────
+
 
 @st.cache_data(ttl=60)
 def fetch_predictions() -> pd.DataFrame:
@@ -71,7 +71,9 @@ with st.sidebar:
     health = api_health()
     status_color = "🟢" if health.get("status") == "healthy" else "🔴"
     st.markdown(f"**API** {status_color} `{health.get('status', 'unknown')}`")
-    st.markdown(f"**DB** {'🟢' if health.get('database') == 'ok' else '🔴'} `{health.get('database', 'unknown')}`")
+    st.markdown(
+        f"**DB** {'🟢' if health.get('database') == 'ok' else '🔴'} `{health.get('database', 'unknown')}`"
+    )
     st.markdown(f"**Model** {'🟢' if health.get('model_loaded') else '🔴'} loaded")
     st.divider()
 
@@ -83,12 +85,13 @@ with st.sidebar:
 
     st.divider()
     st.markdown("**Quick links**")
-    st.markdown(f"[Grafana Dashboard](http://localhost:3000)")
-    st.markdown(f"[MLflow Experiments](http://localhost:5000)")
-    st.markdown(f"[Airflow DAGs](http://localhost:8080)")
+    st.markdown("[Grafana Dashboard](http://localhost:3000)")
+    st.markdown("[MLflow Experiments](http://localhost:5000)")
+    st.markdown("[Airflow DAGs](http://localhost:8080)")
 
 if auto_refresh:
     import time
+
     time.sleep(60)
     st.cache_data.clear()
     st.rerun()
@@ -96,13 +99,17 @@ if auto_refresh:
 # ── Main content ─────────────────────────────────────────────
 
 st.title("🚕 NYC Taxi Demand — Live Forecast")
-st.caption(f"Predictions for: {datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:00 UTC')}")
+st.caption(
+    f"Predictions for: {datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:00 UTC')}"
+)
 
 predictions_df = fetch_predictions()
 monitoring = fetch_monitoring_metrics()
 
 if predictions_df.empty:
-    st.warning("No predictions available. Make sure the API is running and a model is registered.")
+    st.warning(
+        "No predictions available. Make sure the API is running and a model is registered."
+    )
     st.stop()
 
 # ── KPI row ──────────────────────────────────────────────────
@@ -119,12 +126,21 @@ with col2:
 with col3:
     drift_val = monitoring.get("data_drift_score", {}).get("value", "N/A")
     drift_label = f"{drift_val:.3f}" if isinstance(drift_val, float) else drift_val
-    drift_delta = "⚠️ Drifting" if isinstance(drift_val, float) and drift_val > 0.25 else "✅ Stable"
+    drift_delta = (
+        "⚠️ Drifting"
+        if isinstance(drift_val, float) and drift_val > 0.25
+        else "✅ Stable"
+    )
     st.metric("Data Drift Score", drift_label, delta=drift_delta)
 
 with col4:
-    latency = predictions_df["meta_latency_ms"].iloc[0] if not predictions_df.empty else "N/A"
-    st.metric("Prediction Latency", f"{latency:.0f} ms" if isinstance(latency, float) else latency)
+    latency = (
+        predictions_df["meta_latency_ms"].iloc[0] if not predictions_df.empty else "N/A"
+    )
+    st.metric(
+        "Prediction Latency",
+        f"{latency:.0f} ms" if isinstance(latency, float) else latency,
+    )
 
 st.divider()
 
@@ -151,7 +167,9 @@ with col_table:
     display_df = top_zones[["pickup_location_id", "predicted_rides"]].copy()
     display_df.columns = ["Zone ID", "Predicted Rides"]
     display_df["Predicted Rides"] = display_df["Predicted Rides"].round(1)
-    display_df = display_df.sort_values("Predicted Rides", ascending=False).reset_index(drop=True)
+    display_df = display_df.sort_values("Predicted Rides", ascending=False).reset_index(
+        drop=True
+    )
     display_df.index += 1
     st.dataframe(display_df, use_container_width=True)
 
@@ -172,6 +190,6 @@ st.plotly_chart(fig2, use_container_width=True)
 # ── Footer ────────────────────────────────────────────────────
 st.divider()
 st.caption(
-    f"Data source: NYC TLC | Model: MLflow Registry | "
-    f"Feature store: Feast + Redis | Monitoring: Evidently AI + Grafana"
+    "Data source: NYC TLC | Model: MLflow Registry | "
+    "Feature store: Feast + Redis | Monitoring: Evidently AI + Grafana"
 )

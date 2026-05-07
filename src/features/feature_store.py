@@ -18,7 +18,9 @@ def get_feature_store() -> FeatureStore:
     return FeatureStore(repo_path=str(settings.feature_repo_dir))
 
 
-def write_to_offline_store(df: pd.DataFrame, feature_view_name: str = "hourly_rides_view") -> None:
+def write_to_offline_store(
+    df: pd.DataFrame, feature_view_name: str = "hourly_rides_view"
+) -> None:
     """Push a batch of hourly ride counts into the Feast offline store (PostgreSQL)."""
     fs = get_feature_store()
     fs.write_to_offline_store(feature_view_name=feature_view_name, df=df)

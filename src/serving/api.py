@@ -28,7 +28,9 @@ PREDICTIONS_TOTAL = Counter(
     ["location_id"],
 )
 MODEL_MAE = Gauge("taxi_demand_model_mae", "Current production model MAE")
-DATA_DRIFT_SCORE = Gauge("taxi_demand_data_drift_score", "Latest data drift score (0–1)")
+DATA_DRIFT_SCORE = Gauge(
+    "taxi_demand_data_drift_score", "Latest data drift score (0–1)"
+)
 PREDICTION_LATENCY = Histogram(
     "taxi_demand_prediction_latency_seconds",
     "Time to generate predictions batch",
@@ -45,11 +47,14 @@ def _load_model():
     global _model, _model_loaded_at
     try:
         from src.training.registry import load_production_model
+
         _model = load_production_model()
         _model_loaded_at = datetime.now(tz=timezone.utc).isoformat()
         logger.info("Production model loaded successfully")
     except Exception as e:
-        logger.warning(f"Could not load model at startup (will retry on first request): {e}")
+        logger.warning(
+            f"Could not load model at startup (will retry on first request): {e}"
+        )
 
 
 @asynccontextmanager
@@ -78,6 +83,7 @@ Instrumentator().instrument(app).expose(app)
 
 
 # ── Request / Response schemas ────────────────────────────────
+
 
 class PredictionRequest(BaseModel):
     location_ids: list[int] = Field(
@@ -114,6 +120,7 @@ class HealthResponse(BaseModel):
 
 
 # ── Endpoints ────────────────────────────────────────────────
+
 
 @app.get("/health", response_model=HealthResponse, tags=["ops"])
 async def health():
@@ -160,11 +167,13 @@ async def predict(request: PredictionRequest):
 
     predictions = []
     for loc_id, pred in zip(location_ids, raw_preds):
-        predictions.append(ZonePrediction(
-            pickup_location_id=loc_id,
-            predicted_rides=round(float(pred), 2),
-            predicted_hour=target_hour,
-        ))
+        predictions.append(
+            ZonePrediction(
+                pickup_location_id=loc_id,
+                predicted_rides=round(float(pred), 2),
+                predicted_hour=target_hour,
+            )
+        )
         PREDICTIONS_TOTAL.labels(location_id=str(loc_id)).inc()
 
     return PredictionResponse(
@@ -181,6 +190,7 @@ async def monitoring_metrics() -> dict[str, Any]:
     try:
         from src.utils.db import get_session
         from sqlalchemy import text
+
         with get_session() as session:
             rows = session.execute(
                 text("""
@@ -196,6 +206,7 @@ async def monitoring_metrics() -> dict[str, Any]:
 
 
 # ── Helpers ───────────────────────────────────────────────────
+
 
 def _build_feature_df(location_ids: list[int]) -> pd.DataFrame:
     """
@@ -228,7 +239,9 @@ def _build_feature_df(location_ids: list[int]) -> pd.DataFrame:
 
             lags = {f"lag_{j}": counts[-(j)] for j in range(1, window + 1)}
             lags["pickup_location_id"] = loc_id
-            lags["pickup_hour"] = datetime.now(tz=timezone.utc).replace(minute=0, second=0, microsecond=0)
+            lags["pickup_hour"] = datetime.now(tz=timezone.utc).replace(
+                minute=0, second=0, microsecond=0
+            )
             records.append(lags)
 
     return pd.DataFrame(records)

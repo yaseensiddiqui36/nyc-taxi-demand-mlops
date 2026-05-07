@@ -59,7 +59,9 @@ def register_model_if_better(
 
     # Transition old Production models to Archived
     if current_mae is not None:
-        for old_version in client.get_latest_versions(model_name, stages=["Production"]):
+        for old_version in client.get_latest_versions(
+            model_name, stages=["Production"]
+        ):
             client.transition_model_version_stage(
                 name=model_name,
                 version=old_version.version,
@@ -90,7 +92,10 @@ def load_production_model(model_name: str = settings.model_name):
       3. Local joblib fallback (models/taxi_demand_model.joblib)
     """
     from pathlib import Path
-    local_path = Path(__file__).parent.parent.parent / "models" / "taxi_demand_model.joblib"
+
+    local_path = (
+        Path(__file__).parent.parent.parent / "models" / "taxi_demand_model.joblib"
+    )
 
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     client = MlflowClient()
@@ -111,7 +116,9 @@ def load_production_model(model_name: str = settings.model_name):
         if prod:
             source = prod.source  # e.g. mlflow-artifacts:/exp/models/m-xxx/artifacts
             # source points to the directory containing MLmodel + model.pkl
-            artifact_dir = source if not source.endswith(".pkl") else source.rsplit("/", 1)[0]
+            artifact_dir = (
+                source if not source.endswith(".pkl") else source.rsplit("/", 1)[0]
+            )
             model = mlflow.sklearn.load_model(artifact_dir)
             logger.info(f"Loaded production model from artifact URI: {artifact_dir}")
             return model
@@ -121,6 +128,7 @@ def load_production_model(model_name: str = settings.model_name):
     # Attempt 3: local file
     if local_path.exists():
         import joblib
+
         model = joblib.load(local_path)
         logger.info(f"Loaded production model from local file: {local_path}")
         return model

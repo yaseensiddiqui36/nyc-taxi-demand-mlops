@@ -53,12 +53,14 @@ class Settings(BaseSettings):
 
     # ── Data ─────────────────────────────────────────────────
     nyc_tlc_base_url: str = "https://d37ci6vzurychx.cloudfront.net/trip-data"
-    nyc_taxi_zones_url: str = "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zones.zip"
+    nyc_taxi_zones_url: str = (
+        "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zones.zip"
+    )
     backfill_months: int = 24
 
     # ── Model ────────────────────────────────────────────────
     model_name: str = "taxi_demand_predictor"
-    feature_window_hours: int = 672   # 28 days × 24 hours
+    feature_window_hours: int = 672  # 28 days × 24 hours
     prediction_horizon_hours: int = 1
 
     # ── Paths ────────────────────────────────────────────────

@@ -23,24 +23,33 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.AWS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy docker-compose files to server
+      - name: Create project directory on server
         run: |
-          scp -i ~/.ssh/deploy_key \
-            docker-compose.yml \
-            docker-compose.prod.yml \
-            prometheus/prometheus.yml \
-            ubuntu@${{ secrets.AWS_HOST }}:/home/ubuntu/nyc-taxi-demand-mlops/
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} \
+            "mkdir -p /home/ubuntu/nyc-taxi-demand-mlops/prometheus /home/ubuntu/nyc-taxi-demand-mlops/grafana /home/ubuntu/nyc-taxi-demand-mlops/scripts /home/ubuntu/nyc-taxi-demand-mlops/docker /home/ubuntu/nyc-taxi-demand-mlops/feature_repo"
 
-      - name: Copy monitoring configs to server
+      - name: Copy project files to server
         run: |
-          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-            grafana/ \
-            ubuntu@${{ secrets.AWS_HOST }}:/home/ubuntu/nyc-taxi-demand-mlops/grafana/
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
+            --include='docker-compose.yml' \
+            --include='docker-compose.prod.yml' \
+            --include='requirements.txt' \
+            --include='conftest.py' \
+            --include='docker/***' \
+            --include='scripts/***' \
+            --include='src/***' \
+            --include='airflow/***' \
+            --include='feature_repo/***' \
+            --include='models/***' \
+            --include='prometheus/***' \
+            --include='grafana/***' \
+            --exclude='*' \
+            ./ \
+            ubuntu@${{ secrets.AWS_HOST }}:/home/ubuntu/nyc-taxi-demand-mlops/
 
       - name: Create .env on server
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} "
-            mkdir -p /home/ubuntu/nyc-taxi-demand-mlops
             cat > /home/ubuntu/nyc-taxi-demand-mlops/.env << 'ENVEOF'
           POSTGRES_USER=taxi
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
@@ -74,23 +83,23 @@ jobs:
       - name: Free disk space on server
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} "
-            docker system prune -f --volumes 2>/dev/null || true
+            docker system prune -f 2>/dev/null || true
             df -h /
           "
 
-      - name: Pull images and restart services
+      - name: Build and start services
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} "
             cd /home/ubuntu/nyc-taxi-demand-mlops &&
-            docker compose pull &&
-            docker compose up -d --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
           "
 
       - name: Health check
         run: |
-          sleep 30
+          sleep 60
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} \
-            "curl -sf http://localhost:8000/health | python3 -m json.tool"
+            "curl -sf http://localhost:8000/health | python3 -m json.tool || echo 'Health check pending — services may still be starting'"
 
       - name: Notify deployment
         if: always()

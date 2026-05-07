@@ -19,7 +19,9 @@ def setup_logger() -> None:
             serialize=True,
         )
     else:
-        logger.add(sys.stdout, level=settings.log_level.upper(), format=fmt, colorize=True)
+        logger.add(
+            sys.stdout, level=settings.log_level.upper(), format=fmt, colorize=True
+        )
 
     logger.add(
         "logs/app_{time:YYYY-MM-DD}.log",

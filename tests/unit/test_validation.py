@@ -8,7 +8,7 @@ from src.data.validation import validate_and_clean
 def _make_df(**overrides):
     """Build a minimal valid trip DataFrame."""
     base = {
-        "tpep_pickup_datetime":  ["2024-03-15 10:00:00"] * 10,
+        "tpep_pickup_datetime": ["2024-03-15 10:00:00"] * 10,
         "tpep_dropoff_datetime": ["2024-03-15 10:15:00"] * 10,
         "PULocationID": [132] * 10,
         "DOLocationID": [161] * 10,
