@@ -46,7 +46,10 @@ def test_zero_duration_dropped():
 
 
 def test_wrong_month_dropped():
-    df = _make_df(tpep_pickup_datetime=["2024-01-15 10:00:00"] * 10)
+    df = _make_df(
+        tpep_pickup_datetime=["2024-01-15 10:00:00"] * 10,
+        tpep_dropoff_datetime=["2024-01-15 10:15:00"] * 10,
+    )
     _, report = validate_and_clean(df, 2024, 3)
     assert report.failure_reasons["wrong_month"] == 10
 
