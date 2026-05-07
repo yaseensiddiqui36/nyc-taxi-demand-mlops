@@ -3,6 +3,10 @@
 *.env
 *.pem
 
+# Session docs / local notes (not for public repo)
+antigravity_*.md
+errors_in_git_actions.txt
+
 # Python
 __pycache__/
 *.py[cod]
