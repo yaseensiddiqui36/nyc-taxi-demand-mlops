@@ -11,6 +11,9 @@ jobs:
   deploy:
     name: Deploy always-on stack to AWS
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
@@ -83,7 +86,7 @@ jobs:
       - name: Free disk space on server
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} "
-            docker system prune -f 2>/dev/null || true
+            docker system prune -af --volumes 2>/dev/null || true
             df -h /
           "
 
@@ -92,8 +95,12 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} "
             cd /home/ubuntu/nyc-taxi-demand-mlops &&
             echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin &&
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull postgres redis &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull api frontend &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull mlflow &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull airflow-init airflow-webserver airflow-scheduler &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull prometheus grafana &&
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-build --remove-orphans
           "
 
       - name: Health check

@@ -66,5 +66,5 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
-      - run: pytest tests/unit/ -v --tb=short
-      - run: pytest tests/integration/ -v --tb=short
+      - run: python -m pytest tests/unit/ -v --tb=short
+      - run: python -m pytest tests/integration/ -v --tb=short
