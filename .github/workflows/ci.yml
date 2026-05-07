@@ -24,7 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: timescale/timescaledb:latest-pg15
+        # Plain postgres for CI — avoids pulling large TimescaleDB image (disk space error)
+        # TimescaleDB-specific features (hypertables) are tested in integration against real stack
+        image: postgres:15
         env:
           POSTGRES_USER: taxi
           POSTGRES_PASSWORD: testpass
@@ -55,6 +57,8 @@ jobs:
       MLFLOW_TRACKING_URI: sqlite:///mlruns.db
       ENVIRONMENT: test
       LOG_LEVEL: WARNING
+      # Adds project root to Python path so 'from src.data import ...' resolves correctly
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
