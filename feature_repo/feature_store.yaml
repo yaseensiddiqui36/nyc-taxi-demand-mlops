@@ -1,0 +1,22 @@
+project: taxi_demand
+provider: local
+
+registry:
+  registry_type: sql
+  path: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/taxi_demand
+
+online_store:
+  type: redis
+  connection_string: ${REDIS_URL}
+
+offline_store:
+  type: postgres
+  host: ${POSTGRES_HOST}
+  port: ${POSTGRES_PORT}
+  database: taxi_demand
+  db_schema: feast
+  user: ${POSTGRES_USER}
+  password: ${POSTGRES_PASSWORD}
+  sslmode: disable
+
+entity_key_serialization_version: 3

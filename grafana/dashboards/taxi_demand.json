@@ -1,0 +1,128 @@
+{
+  "title": "NYC Taxi Demand MLOps",
+  "uid": "taxi-demand-mlops",
+  "version": 1,
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "API Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(http_requests_total{job=\"taxi_demand_api\"}[5m])",
+          "legendFormat": "{{method}} {{handler}} {{status_code}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "API Latency p99 (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"taxi_demand_api\"}[5m])) * 1000",
+          "legendFormat": "p99 latency"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Predictions Served (total)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "taxi_demand_predictions_total",
+          "legendFormat": "Predictions"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Model MAE (last run)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "taxi_demand_model_mae",
+          "legendFormat": "MAE"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Data Drift Score",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 0.25 }
+            ]
+          },
+          "min": 0,
+          "max": 1
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "taxi_demand_data_drift_score",
+          "legendFormat": "Drift Score"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "API Error Rate",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "rate(http_requests_total{job=\"taxi_demand_api\",status_code=~\"5..\"}[5m]) / rate(http_requests_total{job=\"taxi_demand_api\"}[5m])",
+          "legendFormat": "Error Rate"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "MAE Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "taxi_demand_model_mae",
+          "legendFormat": "Model MAE"
+        }
+      ]
+    }
+  ]
+}

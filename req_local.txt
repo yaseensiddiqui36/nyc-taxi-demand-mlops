@@ -1,0 +1,72 @@
+# ─────────────────────────────────────────────────────────────
+# req_local.txt — install this on your local machine
+#
+# Covers: Feast CLI, training scripts, notebooks, MLflow client,
+#         data validation, drift detection, tests, linting.
+#
+# NOT included (these run inside Docker, no local install needed):
+#   FastAPI, Uvicorn, Streamlit, prometheus-client,
+#   prometheus-fastapi-instrumentator
+# ─────────────────────────────────────────────────────────────
+
+# ── Core data ────────────────────────────────────────────────
+pandas>=2.1.0
+numpy>=1.26.0
+pyarrow>=14.0.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# ── Database (connecting to the Docker PostgreSQL) ────────────
+psycopg2-binary>=2.9.9
+sqlalchemy>=2.0.0
+
+# ── Feature store CLI (feast apply, feast materialize) ────────
+feast[postgres,redis]>=0.38.0
+
+# ── ML / model training ──────────────────────────────────────
+scikit-learn>=1.4.0
+lightgbm>=4.3.0
+xgboost>=2.0.0
+optuna>=3.5.0
+prophet>=1.1.5
+
+# ── MLflow client (log experiments, load models from registry)
+mlflow>=2.10.0
+boto3>=1.34.0
+
+# ── Data validation ──────────────────────────────────────────
+great-expectations>=0.18.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# ── Drift detection (generate Evidently reports) ─────────────
+evidently>=0.4.14
+
+# ── Alerts ───────────────────────────────────────────────────
+slack-sdk>=3.26.0
+
+# ── Logging ──────────────────────────────────────────────────
+loguru>=0.7.2
+
+# ── Geospatial (zone metadata, shapefiles) ───────────────────
+geopandas>=0.14.0
+shapely>=2.0.0
+
+# ── Visualization (notebooks) ────────────────────────────────
+plotly>=5.18.0
+matplotlib>=3.7.0
+seaborn>=0.13.0
+
+# ── Calendar / holidays ──────────────────────────────────────
+holidays>=0.46
+
+# ── Notebooks ────────────────────────────────────────────────
+notebook>=7.0.0
+ipykernel>=6.0.0
+ipywidgets>=8.0.0
+
+# ── Dev / test / lint ────────────────────────────────────────
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
+httpx>=0.26.0
+ruff>=0.2.0

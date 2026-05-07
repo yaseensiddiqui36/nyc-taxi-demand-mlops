@@ -1,0 +1,66 @@
+name: CI — Lint, Test, Validate
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check src/ tests/ airflow/dags/
+      - run: ruff format --check src/ tests/ airflow/dags/
+
+  test:
+    name: Unit + Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg15
+        env:
+          POSTGRES_USER: taxi
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: taxi_demand_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U taxi"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      POSTGRES_USER: taxi
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: taxi_demand_test
+      REDIS_URL: redis://localhost:6379
+      MLFLOW_TRACKING_URI: sqlite:///mlruns.db
+      ENVIRONMENT: test
+      LOG_LEVEL: WARNING
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pytest tests/unit/ -v --tb=short
+      - run: pytest tests/integration/ -v --tb=short

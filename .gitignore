@@ -1,0 +1,64 @@
+# Secrets
+.env
+*.env
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# Data (large files, fetched at runtime)
+data/
+*.parquet
+*.csv
+
+# Models
+models/
+*.pkl
+*.joblib
+
+# MLflow
+mlruns/
+mlflow/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Ruff / mypy
+.ruff_cache/
+.mypy_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Feast registry (generated)
+feature_repo/data/
+feature_repo/registry.db
+
+# Great Expectations (generated)
+great_expectations/uncommitted/
+
+# IDE
+.idea/
+.vscode/
+*.swp
