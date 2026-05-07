@@ -15,9 +15,7 @@ services:
     restart: always
 
   api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.api
+    image: ghcr.io/yaseensiddiqui36/nyc-taxi-demand-mlops-api:latest
     environment:
       ENVIRONMENT: production
       LOG_LEVEL: INFO
@@ -31,9 +29,7 @@ services:
         max-file: "5"
 
   frontend:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.frontend
+    image: ghcr.io/yaseensiddiqui36/nyc-taxi-demand-mlops-frontend:latest
     environment:
       ENVIRONMENT: production
     volumes: []
@@ -46,3 +42,15 @@ services:
     restart: always
     environment:
       GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/"
+
+  airflow-init:
+    image: ghcr.io/yaseensiddiqui36/nyc-taxi-demand-mlops-airflow:latest
+
+  airflow-webserver:
+    image: ghcr.io/yaseensiddiqui36/nyc-taxi-demand-mlops-airflow:latest
+
+  airflow-scheduler:
+    image: ghcr.io/yaseensiddiqui36/nyc-taxi-demand-mlops-airflow:latest
+
+  mlflow:
+    image: ghcr.io/yaseensiddiqui36/nyc-taxi-demand-mlops-mlflow:latest

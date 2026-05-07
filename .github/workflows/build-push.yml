@@ -18,12 +18,16 @@ jobs:
       packages: write
     strategy:
       matrix:
-        service: [api, frontend]
+        service: [api, frontend, airflow, mlflow]
         include:
           - service: api
             dockerfile: docker/Dockerfile.api
           - service: frontend
             dockerfile: docker/Dockerfile.frontend
+          - service: airflow
+            dockerfile: docker/Dockerfile.airflow
+          - service: mlflow
+            dockerfile: docker/Dockerfile.mlflow
 
     steps:
       - uses: actions/checkout@v4
