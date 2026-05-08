@@ -8,7 +8,6 @@ from __future__ import annotations
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from lightgbm import LGBMRegressor
-from xgboost import XGBRegressor
 
 from src.features.engineering import TemporalFeatureEngineer, RollingStatsEngineer
 
@@ -50,33 +49,6 @@ def build_lgbm_pipeline(params: dict | None = None) -> Pipeline:
     )
 
 
-def build_xgb_pipeline(params: dict | None = None) -> Pipeline:
-    """XGBoost — challenger model for comparison experiments."""
-    xgb_params = {
-        "n_estimators": 500,
-        "learning_rate": 0.05,
-        "max_depth": 6,
-        "min_child_weight": 5,
-        "subsample": 0.8,
-        "colsample_bytree": 0.8,
-        "reg_alpha": 0.1,
-        "reg_lambda": 0.1,
-        "random_state": 42,
-        "n_jobs": -1,
-        "verbosity": 0,
-        "tree_method": "hist",  # fast on CPU
-    }
-    if params:
-        xgb_params.update(params)
-    return Pipeline(
-        [
-            ("temporal", TemporalFeatureEngineer()),
-            ("rolling", RollingStatsEngineer()),
-            ("drop_ids", _id_dropper),
-            ("model", XGBRegressor(**xgb_params)),
-        ]
-    )
-
 
 def build_baseline_pipeline() -> Pipeline:
     """
@@ -106,9 +78,8 @@ def build_baseline_pipeline() -> Pipeline:
     )
 
 
-# Registry of all models available for experiments
+# Registry — LightGBM is the production model; baseline kept for sanity checks
 MODEL_REGISTRY = {
     "lgbm": build_lgbm_pipeline,
-    "xgboost": build_xgb_pipeline,
     "baseline": build_baseline_pipeline,
 }

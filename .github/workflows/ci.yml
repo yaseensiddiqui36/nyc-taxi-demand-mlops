@@ -66,5 +66,8 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+      # Install src as editable package so 'from src.xxx import ...' always
+      # resolves correctly even when feast/other packages shadow the src namespace.
+      - run: pip install -e . --no-deps
       - run: python -m pytest tests/unit/ -v
       - run: python -m pytest tests/integration/ -v

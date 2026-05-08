@@ -107,7 +107,7 @@ with DAG(
     def _select_best_model(**ctx) -> None:
         ti = ctx["ti"]
         candidates = {}
-        for name in ["baseline", "lgbm", "xgboost"]:
+        for name in ["baseline", "lgbm"]:
             mae = ti.xcom_pull(key=f"{name}_mae", task_ids=f"train_{name}")
             if mae is not None:
                 candidates[name] = mae
@@ -175,11 +175,6 @@ with DAG(
         python_callable=_train_model,
         op_kwargs={"model_name": "lgbm"},
     )
-    train_xgb = PythonOperator(
-        task_id="train_xgboost",
-        python_callable=_train_model,
-        op_kwargs={"model_name": "xgboost"},
-    )
     select_best = PythonOperator(
         task_id="select_best_model", python_callable=_select_best_model
     )
@@ -191,7 +186,7 @@ with DAG(
     (
         check_data
         >> build_data
-        >> [train_base, train_lgbm, train_xgb]
+        >> [train_base, train_lgbm]
         >> select_best
         >> register
         >> notify

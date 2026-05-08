@@ -15,13 +15,6 @@ feast[postgres,redis]>=0.38.0
 # ── ML ───────────────────────────────────────────────────────
 scikit-learn>=1.4.0
 lightgbm>=4.3.0
-xgboost>=2.0.0
-optuna>=3.5.0
-prophet>=1.1.5
-
-# ── Deep learning (for TFT experiments on Colab) ─────────────
-# Install separately on Colab: pip install pytorch-forecasting torch
-# pytorch-forecasting>=1.0.0
 
 # ── MLflow ───────────────────────────────────────────────────
 mlflow>=2.10.0
