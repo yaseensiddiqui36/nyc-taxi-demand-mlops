@@ -1,14 +1,6 @@
 [tool.pytest.ini_options]
 # Adds project root to sys.path so 'from src.xxx import ...' works in CI.
-# This is more reliable than PYTHONPATH env var or conftest.py sys.path tricks.
+# More reliable than PYTHONPATH env var or conftest.py sys.path tricks.
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "--tb=short"
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I"]
-ignore = ["E501"]

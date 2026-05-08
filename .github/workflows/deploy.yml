@@ -37,6 +37,8 @@ jobs:
             --include='docker-compose.yml' \
             --include='docker-compose.prod.yml' \
             --include='requirements.txt' \
+            --include='requirements.api.txt' \
+            --include='requirements.frontend.txt' \
             --include='conftest.py' \
             --include='docker/***' \
             --include='scripts/***' \
