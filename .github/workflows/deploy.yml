@@ -31,21 +31,30 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} \
             "mkdir -p /home/ubuntu/nyc-taxi-demand-mlops/prometheus /home/ubuntu/nyc-taxi-demand-mlops/grafana /home/ubuntu/nyc-taxi-demand-mlops/scripts /home/ubuntu/nyc-taxi-demand-mlops/docker /home/ubuntu/nyc-taxi-demand-mlops/feature_repo"
 
+      - name: Clean pycache on server (owned by root from Docker mounts)
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.AWS_HOST }} \
+            "sudo find /home/ubuntu/nyc-taxi-demand-mlops -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null; echo 'pycache cleaned'"
+
       - name: Copy project files to server
         run: |
           rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude='**/__pycache__' \
+            --exclude='**/*.pyc' \
+            --filter='protect models/' \
             --include='docker-compose.yml' \
             --include='docker-compose.prod.yml' \
             --include='requirements.txt' \
             --include='requirements.api.txt' \
             --include='requirements.frontend.txt' \
             --include='conftest.py' \
+            --include='setup.py' \
+            --include='pyproject.toml' \
             --include='docker/***' \
             --include='scripts/***' \
             --include='src/***' \
             --include='airflow/***' \
             --include='feature_repo/***' \
-            --include='models/***' \
             --include='prometheus/***' \
             --include='grafana/***' \
             --exclude='*' \

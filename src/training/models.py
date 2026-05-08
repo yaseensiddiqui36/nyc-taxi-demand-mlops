@@ -49,7 +49,6 @@ def build_lgbm_pipeline(params: dict | None = None) -> Pipeline:
     )
 
 
-
 def build_baseline_pipeline() -> Pipeline:
     """
     Naive seasonal baseline: predict the average of the same hour
