@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS predictions (
     predicted_at        TIMESTAMPTZ  DEFAULT NOW()
 );
 SELECT create_hypertable('predictions', 'predicted_hour', if_not_exists => TRUE);
+CREATE UNIQUE INDEX IF NOT EXISTS predictions_location_hour_unique
+    ON predictions (pickup_location_id, predicted_hour);
 CREATE INDEX IF NOT EXISTS idx_predictions_loc_hour
     ON predictions (pickup_location_id, predicted_hour DESC);
 
