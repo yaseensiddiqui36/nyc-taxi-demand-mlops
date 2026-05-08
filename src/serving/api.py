@@ -155,7 +155,9 @@ async def predict(request: PredictionRequest):
     try:
         # Fetch latest feature window from PostgreSQL / Redis
         X = _build_feature_df(location_ids)
-        raw_preds = _model.predict(X).clip(0)
+        # Drop non-numeric columns the model was not trained on
+        feature_cols = [c for c in X.columns if c != "pickup_hour"]
+        raw_preds = _model.predict(X[feature_cols]).clip(0)
     except Exception as e:
         logger.error(f"Prediction failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
