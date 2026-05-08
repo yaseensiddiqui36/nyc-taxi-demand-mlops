@@ -21,7 +21,8 @@ venv/
 env/
 
 # Data (large files, fetched at runtime)
-data/
+# NOTE: /data/ (root only) so that src/data/ package is NOT ignored
+/data/
 *.parquet
 *.csv
 
