@@ -86,21 +86,24 @@ def register_model_if_better(
 def load_production_model(model_name: str = settings.model_name):
     """
     Load the current Production model.
-    Attempts in order:
-      1. MLflow registry (models:/{name}/Production)
-      2. Direct artifact URI from the registered version source
-      3. Local joblib fallback (models/taxi_demand_model.joblib)
+    Checks local joblib file first (instant, no network), then MLflow registry.
     """
+    import joblib
     from pathlib import Path
 
     local_path = (
         Path(__file__).parent.parent.parent / "models" / "taxi_demand_model.joblib"
     )
 
+    # Attempt 1: local file (fast, no network dependency)
+    if local_path.exists():
+        model = joblib.load(local_path)
+        logger.info(f"Loaded production model from local file: {local_path}")
+        return model
+
+    # Attempt 2: MLflow registry
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     client = MlflowClient()
-
-    # Attempt 1: standard registry URI
     try:
         model = mlflow.sklearn.load_model(f"models:/{model_name}/Production")
         logger.info(f"Loaded production model from MLflow registry: {model_name}")
@@ -108,14 +111,12 @@ def load_production_model(model_name: str = settings.model_name):
     except Exception as e:
         logger.warning(f"Registry URI load failed: {e}")
 
-    # Attempt 2: resolve the artifact URI directly from the registered version
-    # Handles MLflow 2.x LoggedModel paths (mlflow-artifacts:/exp/models/m-xxx/artifacts)
+    # Attempt 3: direct artifact URI (MLflow 2.x LoggedModel path)
     try:
         versions = client.search_model_versions(f"name='{model_name}'")
         prod = next((v for v in versions if v.current_stage == "Production"), None)
         if prod:
-            source = prod.source  # e.g. mlflow-artifacts:/exp/models/m-xxx/artifacts
-            # source points to the directory containing MLmodel + model.pkl
+            source = prod.source
             artifact_dir = (
                 source if not source.endswith(".pkl") else source.rsplit("/", 1)[0]
             )
@@ -125,13 +126,9 @@ def load_production_model(model_name: str = settings.model_name):
     except Exception as e:
         logger.warning(f"Direct artifact URI load failed: {e}")
 
-    # Attempt 3: local file
-    if local_path.exists():
-        import joblib
-
-        model = joblib.load(local_path)
-        logger.info(f"Loaded production model from local file: {local_path}")
-        return model
+    raise RuntimeError(
+        f"No production model available. Place a model at {local_path}"
+    )
 
     raise RuntimeError(
         "No production model available. Either fix MLflow artifact upload "

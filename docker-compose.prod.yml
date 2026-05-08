@@ -18,8 +18,9 @@ services:
     environment:
       ENVIRONMENT: production
       LOG_LEVEL: INFO
-    # No volume mounts in prod — code baked into image
-    volumes: []
+    volumes:
+      - ./src:/app/src        # live code (allows registry.py updates without rebuild)
+      - ./models:/app/models  # model file (not in image, deployed separately)
     restart: always
     logging:
       driver: "json-file"
@@ -31,7 +32,6 @@ services:
     image: ghcr.io/yaseensiddiqui36/nyc-taxi-demand-mlops-frontend:latest
     environment:
       ENVIRONMENT: production
-    volumes: []
     restart: always
 
   prometheus:
